@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/posture-app/sw.js', { scope: '/posture-app/' })})}
