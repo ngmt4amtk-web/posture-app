@@ -42,3 +42,17 @@ body {
 .mirror {
   transform: scaleX(-1);
 }
+
+/* Fade in animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Safe area bottom */
+.safe-area-bottom {
+  padding-bottom: max(env(safe-area-inset-bottom), 16px);
+}

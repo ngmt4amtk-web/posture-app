@@ -132,8 +132,10 @@ export function computeOverallScore(metrics: PostureMetrics): number {
     if (!m) continue;
     const w = weights[key] ?? 1;
     const baseScore = statusToScore(m.status);
-    const stabilityBonus = (m.stability - 50) / 50 * 5; // ±5 bonus
-    weightedSum += (baseScore + stabilityBonus) * w;
+    // Stability contributes 20% of each metric's score
+    const stabilityScore = m.stability; // 0-100
+    const combinedScore = baseScore * 0.8 + stabilityScore * 0.2;
+    weightedSum += combinedScore * w;
     totalWeight += w;
   }
 

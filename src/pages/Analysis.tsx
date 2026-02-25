@@ -19,6 +19,110 @@ import type { MetricStatus, Session } from '../db';
 const MEASURE_DURATION = 15;
 const READINESS_FRAMES_NEEDED = 3;
 
+// Guide screen component
+function GuideScreen({ view, onReady, onCancel, lang }: {
+  view: 'front' | 'side';
+  onReady: () => void;
+  onCancel: () => void;
+  lang: 'ja' | 'en';
+}) {
+  const tr = t(lang);
+  const guide = tr.guide;
+  const isFront = view === 'front';
+  const title = isFront ? guide.frontTitle : guide.sideTitle;
+  const steps = isFront ? guide.frontSteps : guide.sideSteps;
+  const tip = isFront ? guide.frontTip : guide.sideTip;
+
+  return (
+    <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-900">
+      <div className="flex items-center justify-between p-4">
+        <button onClick={onCancel} className="text-gray-500 dark:text-gray-400 text-sm px-3 py-1">
+          {tr.analysis.cancel}
+        </button>
+        <span className="text-sm text-gray-500 dark:text-gray-400">
+          {tr.analysis.step} {isFront ? '1' : '2'} {tr.analysis.of} {isFront ? '1' : '2'}
+        </span>
+      </div>
+
+      <div className="flex-1 flex flex-col items-center justify-center px-6 pb-8">
+        {/* Visual diagram */}
+        <div className="w-48 h-48 mb-6 flex items-center justify-center">
+          {isFront ? (
+            <div className="relative">
+              {/* Stick figure - front view */}
+              <svg viewBox="0 0 120 200" className="w-32 h-44">
+                {/* Head */}
+                <circle cx="60" cy="25" r="15" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary-500" />
+                {/* Body */}
+                <line x1="60" y1="40" x2="60" y2="110" stroke="currentColor" strokeWidth="2" className="text-primary-500" />
+                {/* Arms */}
+                <line x1="60" y1="55" x2="30" y2="90" stroke="currentColor" strokeWidth="2" className="text-primary-500" />
+                <line x1="60" y1="55" x2="90" y2="90" stroke="currentColor" strokeWidth="2" className="text-primary-500" />
+                {/* Legs */}
+                <line x1="60" y1="110" x2="40" y2="170" stroke="currentColor" strokeWidth="2" className="text-primary-500" />
+                <line x1="60" y1="110" x2="80" y2="170" stroke="currentColor" strokeWidth="2" className="text-primary-500" />
+                {/* Camera indicator */}
+                <rect x="45" y="185" width="30" height="8" rx="2" fill="currentColor" className="text-gray-400" />
+                <text x="60" y="198" textAnchor="middle" fontSize="7" fill="currentColor" className="text-gray-400">{guide.distanceHint}</text>
+                {/* Arrow showing distance */}
+                <line x1="60" y1="175" x2="60" y2="183" stroke="currentColor" strokeWidth="1" strokeDasharray="2" className="text-gray-400" />
+              </svg>
+            </div>
+          ) : (
+            <div className="relative">
+              {/* Stick figure - side view */}
+              <svg viewBox="0 0 120 200" className="w-32 h-44">
+                {/* Head */}
+                <circle cx="55" cy="25" r="15" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary-500" />
+                {/* Body - slight natural curve */}
+                <path d="M55 40 Q58 75 55 110" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary-500" />
+                {/* Arms */}
+                <line x1="55" y1="55" x2="45" y2="90" stroke="currentColor" strokeWidth="2" className="text-primary-500" />
+                {/* Legs */}
+                <line x1="55" y1="110" x2="50" y2="170" stroke="currentColor" strokeWidth="2" className="text-primary-500" />
+                {/* 90° rotation arrow */}
+                <path d="M85 100 A20 20 0 0 1 85 130" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-amber-500" />
+                <polygon points="85,130 82,124 88,124" fill="currentColor" className="text-amber-500" />
+                <text x="95" y="118" fontSize="8" fill="currentColor" className="text-amber-500">90°</text>
+                {/* Camera */}
+                <rect x="45" y="185" width="30" height="8" rx="2" fill="currentColor" className="text-gray-400" />
+              </svg>
+            </div>
+          )}
+        </div>
+
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">{title}</h2>
+
+        {/* Steps */}
+        <div className="w-full max-w-sm space-y-3 mb-6">
+          {steps.map((step: string, i: number) => (
+            <div key={i} className="flex items-start gap-3">
+              <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary-500 text-white flex items-center justify-center text-sm font-bold">
+                {i + 1}
+              </div>
+              <p className="text-sm text-gray-700 dark:text-gray-300 pt-0.5">{step}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Tip */}
+        <div className="w-full max-w-sm bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-3">
+          <p className="text-sm text-amber-800 dark:text-amber-300 text-center">{tip}</p>
+        </div>
+      </div>
+
+      <div className="p-4 safe-area-bottom">
+        <button
+          onClick={onReady}
+          className="w-full py-3.5 rounded-xl bg-primary-500 text-white font-semibold text-lg"
+        >
+          {guide.ready}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function Analysis() {
   const { lang, setPage } = useAppStore();
   const store = useAnalysisStore();
@@ -38,6 +142,7 @@ export function Analysis() {
   const [readinessResults, setReadinessResults] = useState<boolean[]>([]);
   const [, setReadinessPassCount] = useState(0);
   const [allPassed, setAllPassed] = useState(false);
+  const [showGuide, setShowGuide] = useState<'front' | 'side' | null>('front');
 
   const phaseRef = useRef(store.phase);
   phaseRef.current = store.phase;
@@ -240,6 +345,12 @@ export function Analysis() {
     readinessPassRef.current = 0;
     setReadinessPassCount(0);
     setReadinessResults([]);
+    // Show side guide before starting side measurement
+    setShowGuide('side');
+  };
+
+  const handleSideGuideReady = () => {
+    setShowGuide(null);
     store.setPhase('side-readiness');
   };
 
@@ -273,6 +384,7 @@ export function Analysis() {
     setReadinessPassCount(0);
     setReadinessResults([]);
     setAllPassed(false);
+    setShowGuide(null);
     store.setPhase('readiness');
   };
 
@@ -288,6 +400,18 @@ export function Analysis() {
 
   const phase = store.phase;
   const isQuick = store.sessionType === 'quick';
+
+  // Show guide screen
+  if (showGuide) {
+    return (
+      <GuideScreen
+        view={showGuide}
+        onReady={showGuide === 'front' ? startReadiness : handleSideGuideReady}
+        onCancel={handleCancel}
+        lang={lang}
+      />
+    );
+  }
 
   return (
     <div className="h-full flex flex-col bg-black">
