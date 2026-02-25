@@ -413,24 +413,44 @@ export function Analysis() {
     );
   }
 
+  const isMeasuring = phase === 'measuring' || phase === 'side-measuring';
+  const remaining = Math.max(0, MEASURE_DURATION - store.elapsed);
+  const timerPct = (store.elapsed / MEASURE_DURATION) * 100;
+
+  // Get top 3 live statuses for display
+  const liveMetrics = [
+    { key: 'headTilt', label: 'Head Tilt', icon: 'face' },
+    { key: 'shoulderLevel', label: 'Shoulders', icon: 'accessibility_new' },
+    { key: 'trunkLean', label: 'Spine Align', icon: 'favorite' },
+  ];
+
   return (
-    <div className="h-full flex flex-col bg-black">
-      {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between p-3 bg-gradient-to-b from-black/60 to-transparent">
-        <button onClick={handleCancel} className="text-white text-sm px-3 py-1 rounded-full bg-white/20">
-          {tr.analysis.cancel}
-        </button>
-        <span className="text-white font-semibold">
-          {isQuick ? tr.analysis.quick : tr.analysis.full}
-          {(phase === 'side-readiness' || phase === 'side-countdown' || phase === 'side-measuring') && ` — ${tr.analysis.side}`}
-        </span>
-        <button onClick={flipCamera} className="text-white text-sm px-3 py-1 rounded-full bg-white/20">
-          🔄
-        </button>
+    <div className="h-full flex flex-col bg-bg-dark relative">
+      {/* Top App Bar */}
+      <div className="absolute top-0 left-0 w-full z-30 pt-12 pb-4 px-4 bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
+        <div className="flex items-center justify-between pointer-events-auto">
+          <button onClick={handleCancel} className="flex items-center justify-center w-10 h-10 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition-colors">
+            <span className="material-symbols-outlined">arrow_back</span>
+          </button>
+          <div className="flex flex-col items-center">
+            {isMeasuring && (
+              <span className="text-xs uppercase tracking-widest text-primary/80 font-bold mb-0.5">
+                {tr.analysis.measuring}
+              </span>
+            )}
+            <h2 className="text-white text-base font-semibold drop-shadow-md">
+              {isQuick ? tr.analysis.quick : tr.analysis.full}
+              {(phase === 'side-readiness' || phase === 'side-countdown' || phase === 'side-measuring') && ` — ${tr.analysis.side}`}
+            </h2>
+          </div>
+          <button onClick={flipCamera} className="flex items-center justify-center w-10 h-10 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition-colors">
+            <span className="material-symbols-outlined">cameraswitch</span>
+          </button>
+        </div>
       </div>
 
-      {/* Camera + Overlay */}
-      <div className="flex-1 relative overflow-hidden">
+      {/* Camera area */}
+      <div className="relative flex-grow w-full bg-slate-900 overflow-hidden">
         {phase === 'loading' ? (
           <div className="flex flex-col items-center justify-center h-full text-white">
             <div className="animate-spin w-12 h-12 border-4 border-white border-t-transparent rounded-full mb-4" />
@@ -446,6 +466,12 @@ export function Analysis() {
               videoHeight={videoSize.h}
               statuses={statuses}
             />
+
+            {/* Corner brackets */}
+            <div className="absolute top-1/4 left-6 w-8 h-8 border-t-4 border-l-4 border-white/50 rounded-tl-lg pointer-events-none" />
+            <div className="absolute top-1/4 right-6 w-8 h-8 border-t-4 border-r-4 border-white/50 rounded-tr-lg pointer-events-none" />
+            <div className="absolute bottom-1/4 left-6 w-8 h-8 border-b-4 border-l-4 border-white/50 rounded-bl-lg pointer-events-none" />
+            <div className="absolute bottom-1/4 right-6 w-8 h-8 border-b-4 border-r-4 border-white/50 rounded-br-lg pointer-events-none" />
           </>
         )}
 
@@ -465,53 +491,109 @@ export function Analysis() {
           </div>
         )}
 
-        {/* Measuring overlay */}
-        {(phase === 'measuring' || phase === 'side-measuring') && (
-          <div className="absolute bottom-0 left-0 right-0 z-20 p-4">
-            <div className="bg-black/60 rounded-xl p-3">
-              <div className="flex justify-between text-white text-sm mb-2">
-                <span>{tr.analysis.measuring}</span>
-                <span>{Math.floor(store.elapsed)}{tr.analysis.seconds} / {MEASURE_DURATION}{tr.analysis.seconds}</span>
-              </div>
-              <div className="w-full bg-gray-700 rounded-full h-2">
-                <div
-                  className="bg-primary-500 h-2 rounded-full transition-all"
-                  style={{ width: `${(store.elapsed / MEASURE_DURATION) * 100}%` }}
+        {/* Timer ring overlay (during measuring) */}
+        {isMeasuring && (
+          <div className="absolute top-24 left-1/2 -translate-x-1/2 flex flex-col items-center z-10">
+            <div className="relative flex items-center justify-center w-20 h-20">
+              <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 36 36">
+                <path
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="3"
                 />
+                <path
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  fill="none" stroke="#6366f1" strokeWidth="3"
+                  strokeDasharray={`${timerPct}, 100`}
+                  strokeLinecap="round"
+                  style={{ filter: 'drop-shadow(0 0 10px rgba(99, 102, 241, 0.6))' }}
+                />
+              </svg>
+              <div className="flex flex-col items-center">
+                <span className="text-3xl font-bold text-white tabular-nums tracking-tighter drop-shadow-lg">
+                  {Math.ceil(remaining)}
+                </span>
+                <span className="text-[10px] uppercase text-white/80 font-medium tracking-wider -mt-1">Sec</span>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Status chip */}
+        {landmarks && (phase === 'readiness' || phase === 'side-readiness' || isMeasuring) && (
+          <div className="absolute bottom-4 left-0 w-full flex justify-center z-10 px-6">
+            <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-full px-4 py-2 flex items-center gap-2 shadow-lg">
+              <span className="relative flex w-2.5 h-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full w-2.5 h-2.5 bg-emerald-500" />
+              </span>
+              <span className="text-white text-xs font-medium tracking-wide">
+                {isMeasuring ? tr.analysis.measuring : tr.analysis.readinessHint}
+              </span>
             </div>
           </div>
         )}
       </div>
 
-      {/* Bottom actions */}
-      <div className="flex-shrink-0 p-4 bg-black safe-area-bottom">
-        {phase === 'ready' && (
-          <button
-            onClick={startReadiness}
-            className="w-full py-3 rounded-xl bg-primary-500 text-white font-semibold text-lg"
-          >
-            {tr.analysis.startMeasure}
-          </button>
-        )}
+      {/* Bottom Panel */}
+      <div className="bg-bg-dark border-t border-white/5 relative z-30 pt-1 pb-6 rounded-t-3xl -mt-4 shadow-[0_-8px_30px_rgba(0,0,0,0.5)]">
+        <div className="w-full flex justify-center pt-3 pb-2">
+          <div className="w-12 h-1.5 rounded-full bg-white/10" />
+        </div>
+        <div className="px-5">
+          {/* Live Metrics during measuring */}
+          {isMeasuring && (
+            <>
+              <div className="flex items-center justify-between mb-4 mt-2">
+                <h3 className="text-white font-semibold text-lg">Live Metrics</h3>
+                <div className="flex items-center gap-1.5 text-xs font-medium text-primary bg-primary/10 px-2.5 py-1 rounded-md border border-primary/20">
+                  <span className="material-symbols-outlined" style={{ fontSize: 14 }}>sensors</span>
+                  <span>AI Active</span>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                {liveMetrics.map(({ key, label, icon }) => {
+                  const st = statuses[key];
+                  const isGood = st === 'good';
+                  return (
+                    <div key={key} className="bg-surface-dark border border-white/5 rounded-2xl p-3 flex flex-col gap-1 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 p-2 opacity-20">
+                        <span className="material-symbols-outlined text-white" style={{ fontSize: 20 }}>{icon}</span>
+                      </div>
+                      <span className="text-slate-400 text-[10px] uppercase tracking-wider font-semibold">{label}</span>
+                      <div className="flex items-end gap-1 mt-1">
+                        <span className="text-xl font-bold text-white">
+                          {st ? (isGood ? 'OK' : '!') : '—'}
+                        </span>
+                      </div>
+                      <div className="h-1 w-full bg-white/5 rounded-full mt-2 overflow-hidden">
+                        <div className={`h-full rounded-full ${isGood ? 'bg-emerald-500' : st === 'warning' ? 'bg-amber-500' : st === 'bad' ? 'bg-rose-500' : 'bg-white/10'}`} style={{ width: isGood ? '80%' : st === 'warning' ? '50%' : '30%' }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
 
-        {phase === 'done' && !isQuick && (
-          <button
-            onClick={handleNextSide}
-            className="w-full py-3 rounded-xl bg-primary-500 text-white font-semibold text-lg"
-          >
-            {tr.analysis.nextSide}
-          </button>
-        )}
-
-        {phase === 'side-done' && (
-          <button
-            onClick={finishFullAssessment}
-            className="w-full py-3 rounded-xl bg-green-500 text-white font-semibold text-lg"
-          >
-            {tr.analysis.finish}
-          </button>
-        )}
+          {/* Action buttons */}
+          <div className="mt-4">
+            {phase === 'ready' && (
+              <button onClick={startReadiness} className="w-full py-3.5 rounded-xl bg-primary text-white font-semibold text-lg transition-transform active:scale-[0.98]">
+                {tr.analysis.startMeasure}
+              </button>
+            )}
+            {phase === 'done' && !isQuick && (
+              <button onClick={handleNextSide} className="w-full py-3.5 rounded-xl bg-primary text-white font-semibold text-lg transition-transform active:scale-[0.98]">
+                {tr.analysis.nextSide}
+              </button>
+            )}
+            {phase === 'side-done' && (
+              <button onClick={finishFullAssessment} className="w-full py-3.5 rounded-xl bg-emerald-500 text-white font-semibold text-lg transition-transform active:scale-[0.98]">
+                {tr.analysis.finish}
+              </button>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

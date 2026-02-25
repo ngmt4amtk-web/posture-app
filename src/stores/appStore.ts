@@ -16,7 +16,7 @@ interface AppState {
 function getStoredTheme(): Theme {
   const stored = localStorage.getItem('posture-theme');
   if (stored === 'light' || stored === 'dark' || stored === 'system') return stored;
-  return 'system';
+  return 'dark';
 }
 
 function applyTheme(theme: Theme) {

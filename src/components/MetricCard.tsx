@@ -1,50 +1,102 @@
+import { useState } from 'react';
 import type { MetricResult } from '../db';
+import { Icon } from './Icon';
 
 interface Props {
   name: string;
-  desc: string;
-  ref_text: string;
+  category: string;
   metric: MetricResult;
   adviceText?: string;
+  icon?: string;
 }
 
-const STATUS_BG = {
-  good: 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800',
-  warning: 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800',
-  bad: 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800',
+const STATUS_CONFIG = {
+  good: {
+    bg: 'bg-emerald-500/10',
+    text: 'text-emerald-600 dark:text-emerald-400',
+    bar: 'bg-emerald-500',
+    icon: 'sentiment_satisfied',
+    label: 'Good',
+  },
+  warning: {
+    bg: 'bg-amber-500/10',
+    text: 'text-amber-600 dark:text-amber-400',
+    bar: 'bg-amber-500',
+    icon: 'sentiment_neutral',
+    label: 'Warning',
+  },
+  bad: {
+    bg: 'bg-rose-500/10',
+    text: 'text-rose-600 dark:text-rose-400',
+    bar: 'bg-rose-500',
+    icon: 'sentiment_dissatisfied',
+    label: 'Needs Work',
+  },
 } as const;
 
-const STATUS_DOT = {
-  good: 'bg-green-500',
-  warning: 'bg-amber-500',
-  bad: 'bg-red-500',
-} as const;
+function scoreToPercent(status: 'good' | 'warning' | 'bad', stability: number): number {
+  const base = status === 'good' ? 85 : status === 'warning' ? 55 : 30;
+  return Math.min(100, base + (stability - 50) / 50 * 15);
+}
 
-export function MetricCard({ name, desc, ref_text, metric, adviceText }: Props) {
+export function MetricCard({ name, category, metric, adviceText, icon }: Props) {
+  const [expanded, setExpanded] = useState(false);
+  const cfg = STATUS_CONFIG[metric.status];
+  const pct = scoreToPercent(metric.status, metric.stability);
+
   return (
-    <div className={`rounded-xl border p-4 ${STATUS_BG[metric.status]}`}>
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <div className={`w-3 h-3 rounded-full ${STATUS_DOT[metric.status]}`} />
-          <h3 className="font-semibold text-gray-900 dark:text-white">{name}</h3>
+    <div
+      className="group flex flex-col gap-3 rounded-xl bg-white dark:bg-surface-dark-2 p-4 border border-slate-100 dark:border-slate-800/50 hover:border-primary/30 transition-all cursor-pointer"
+      onClick={() => setExpanded(!expanded)}
+    >
+      {/* Header row */}
+      <div className="flex items-start justify-between">
+        <div className="flex items-center gap-3">
+          <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${cfg.bg} ${cfg.text}`}>
+            <Icon name={icon || cfg.icon} />
+          </div>
+          <div>
+            <p className="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wide">{category}</p>
+            <h4 className="text-slate-900 dark:text-white font-bold text-base">{name}</h4>
+          </div>
         </div>
-        <span className="text-xl font-bold dark:text-white">
-          {metric.value}{metric.unit}
+        <span className={`rounded px-2 py-1 text-xs font-bold ${cfg.bg} ${cfg.text}`}>
+          {cfg.label} ({metric.value}{metric.unit})
         </span>
       </div>
-      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{desc}</p>
-      <p className="text-xs text-gray-500 dark:text-gray-500 mb-2">{ref_text}</p>
 
-      <div className="flex gap-4 text-xs text-gray-500 dark:text-gray-500">
-        <span>avg: {metric.mean}{metric.unit}</span>
-        <span>range: {metric.min}–{metric.max}{metric.unit}</span>
-        <span>stability: {metric.stability}%</span>
+      {/* Progress bar */}
+      <div className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800">
+        <div
+          className={`h-1.5 rounded-full ${cfg.bar} transition-all`}
+          style={{ width: `${pct}%` }}
+        />
       </div>
 
-      {adviceText && (
-        <p className="mt-2 text-sm text-gray-700 dark:text-gray-300 border-t border-gray-200 dark:border-gray-700 pt-2">
-          {adviceText}
-        </p>
+      {/* Bottom row */}
+      <div className="flex items-center justify-between mt-1">
+        {adviceText && !expanded ? (
+          <p className="text-xs text-slate-500 dark:text-slate-400 truncate mr-2">{adviceText}</p>
+        ) : (
+          <div />
+        )}
+        <button className="text-xs font-semibold text-slate-500 dark:text-slate-400 group-hover:text-primary flex items-center transition-colors shrink-0">
+          Details <Icon name="chevron_right" size={16} />
+        </button>
+      </div>
+
+      {/* Expanded detail */}
+      {expanded && (
+        <div className="animate-fadeIn border-t border-slate-100 dark:border-slate-800 pt-3 space-y-2">
+          {adviceText && (
+            <p className="text-sm text-slate-600 dark:text-slate-300">{adviceText}</p>
+          )}
+          <div className="flex gap-4 text-xs text-slate-500 dark:text-slate-500">
+            <span>Avg: {metric.mean}{metric.unit}</span>
+            <span>Range: {metric.min}–{metric.max}{metric.unit}</span>
+            <span>Stability: {metric.stability}%</span>
+          </div>
+        </div>
       )}
     </div>
   );

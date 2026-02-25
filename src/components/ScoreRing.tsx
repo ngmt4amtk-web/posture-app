@@ -5,24 +5,36 @@ interface Props {
   label?: string;
 }
 
-export function ScoreRing({ score, size = 160, strokeWidth = 12, label }: Props) {
-  const radius = (size - strokeWidth) / 2;
+export function ScoreRing({ score, size = 192, strokeWidth = 8, label }: Props) {
+  const radius = (size - strokeWidth * 2) / 2 * 0.9;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (score / 100) * circumference;
-
-  const color = score >= 80 ? 'var(--color-good)' : score >= 50 ? 'var(--color-warning)' : 'var(--color-bad)';
+  const center = size / 2;
 
   return (
-    <div className="flex flex-col items-center">
-      <svg width={size} height={size} className="transform -rotate-90">
+    <div className="relative flex flex-col items-center">
+      {/* Outer glow */}
+      <div
+        className="absolute rounded-full bg-primary/20 blur-2xl"
+        style={{ width: size, height: size }}
+      />
+      <svg width={size} height={size} className="transform -rotate-90 relative">
+        <defs>
+          <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#6366f1" />
+            <stop offset="100%" stopColor="#818cf8" />
+          </linearGradient>
+        </defs>
+        {/* Background circle */}
         <circle
-          cx={size / 2} cy={size / 2} r={radius}
+          cx={center} cy={center} r={radius}
           fill="none" stroke="currentColor" strokeWidth={strokeWidth}
-          className="text-gray-200 dark:text-gray-700"
+          className="text-slate-200 dark:text-slate-800"
         />
+        {/* Progress circle */}
         <circle
-          cx={size / 2} cy={size / 2} r={radius}
-          fill="none" stroke={color} strokeWidth={strokeWidth}
+          cx={center} cy={center} r={radius}
+          fill="none" stroke="url(#scoreGradient)" strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
@@ -30,11 +42,13 @@ export function ScoreRing({ score, size = 160, strokeWidth = 12, label }: Props)
           style={{ '--circumference': circumference, '--offset': offset } as React.CSSProperties}
         />
       </svg>
-      <div className="absolute flex flex-col items-center justify-center" style={{ width: size, height: size }}>
-        <span className="text-4xl font-bold dark:text-white" style={{ color }}>{score}</span>
-        <span className="text-xs text-gray-500 dark:text-gray-400">/100</span>
+      {/* Inner text */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-4xl font-bold text-primary dark:text-primary-light">{score}</span>
+        <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+          {label || 'Posture Score'}
+        </span>
       </div>
-      {label && <span className="mt-2 text-sm text-gray-600 dark:text-gray-400">{label}</span>}
     </div>
   );
 }

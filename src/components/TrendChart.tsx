@@ -2,70 +2,95 @@ import type { Session } from '../db';
 
 interface Props {
   sessions: Session[];
-  width?: number;
   height?: number;
 }
 
-export function TrendChart({ sessions, width = 320, height = 160 }: Props) {
+export function TrendChart({ sessions, height = 140 }: Props) {
   if (sessions.length === 0) return null;
 
-  const sorted = [...sessions].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-  const scores = sorted.map((s) => s.overallScore);
-  const minScore = Math.max(0, Math.min(...scores) - 10);
-  const maxScore = Math.min(100, Math.max(...scores) + 10);
-  const range = maxScore - minScore || 1;
+  const maxScore = 100;
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-  const padX = 40;
-  const padY = 20;
-  const chartW = width - padX * 2;
-  const chartH = height - padY * 2;
+  // Map sessions to last 7 days
+  const dayScores: (number | null)[] = [];
+  const now = new Date();
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const dayStr = d.toDateString();
+    const match = [...sessions]
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .find(s => new Date(s.timestamp).toDateString() === dayStr);
+    dayScores.push(match ? match.overallScore : null);
+  }
 
-  const points = scores.map((s, i) => {
-    const x = padX + (scores.length > 1 ? (i / (scores.length - 1)) * chartW : chartW / 2);
-    const y = padY + chartH - ((s - minScore) / range) * chartH;
-    return { x, y, score: s };
-  });
+  const dayLabels: string[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    dayLabels.push(days[d.getDay()]);
+  }
 
-  const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
-
-  const getColor = (score: number) => {
-    if (score >= 80) return '#22c55e';
-    if (score >= 50) return '#f59e0b';
-    return '#ef4444';
-  };
+  // Compute trend
+  const validScores = dayScores.filter((s): s is number => s !== null);
+  const trend = validScores.length >= 2
+    ? validScores[validScores.length - 1] - validScores[0]
+    : 0;
 
   return (
-    <svg width={width} height={height} className="w-full" viewBox={`0 0 ${width} ${height}`}>
-      {/* Grid lines */}
-      {[0, 25, 50, 75, 100].filter(v => v >= minScore && v <= maxScore).map((v) => {
-        const y = padY + chartH - ((v - minScore) / range) * chartH;
-        return (
-          <g key={v}>
-            <line x1={padX} y1={y} x2={width - padX} y2={y} stroke="currentColor" strokeOpacity={0.1} />
-            <text x={padX - 8} y={y + 4} textAnchor="end" fill="currentColor" fillOpacity={0.4} fontSize={10}>{v}</text>
-          </g>
-        );
-      })}
-
-      {/* Line */}
-      <path d={pathD} fill="none" stroke="#6366f1" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
-
-      {/* Points */}
-      {points.map((p, i) => (
-        <g key={i}>
-          <circle cx={p.x} cy={p.y} r={5} fill={getColor(p.score)} stroke="white" strokeWidth={2} />
-          <text x={p.x} y={p.y - 10} textAnchor="middle" fill="currentColor" fillOpacity={0.6} fontSize={10}>{p.score}</text>
-        </g>
-      ))}
-
-      {/* Date labels */}
-      {sorted.length <= 7 && sorted.map((s, i) => {
-        const d = new Date(s.timestamp);
-        const label = `${d.getMonth() + 1}/${d.getDate()}`;
-        return (
-          <text key={i} x={points[i].x} y={height - 4} textAnchor="middle" fill="currentColor" fillOpacity={0.4} fontSize={9}>{label}</text>
-        );
-      })}
-    </svg>
+    <div>
+      <div className="flex items-center justify-between mb-3 px-1">
+        <h3 className="text-lg font-bold text-slate-900 dark:text-white">7-Day Trend</h3>
+        {trend !== 0 && (
+          <span className={`text-xs font-medium flex items-center gap-1 px-2 py-1 rounded-full ${
+            trend > 0
+              ? 'text-green-500 bg-green-500/10'
+              : 'text-red-500 bg-red-500/10'
+          }`}>
+            <span className="material-symbols-outlined" style={{ fontSize: 14 }}>
+              {trend > 0 ? 'trending_up' : 'trending_down'}
+            </span>
+            {trend > 0 ? '+' : ''}{trend}%
+          </span>
+        )}
+      </div>
+      <div className="w-full bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-200 dark:border-slate-800">
+        <div style={{ height }} className="w-full relative flex items-end justify-between px-1 gap-2">
+          {dayScores.map((score, i) => {
+            const pct = score ? (score / maxScore) * 100 : 0;
+            const isToday = i === dayScores.length - 1;
+            const isLatest = isToday && score !== null;
+            return (
+              <div key={i} className="w-full relative group flex flex-col items-center">
+                {score !== null && (
+                  <div className={`absolute -top-6 bg-slate-800 dark:bg-white text-white dark:text-slate-900 text-[10px] px-1.5 py-0.5 rounded transition-opacity whitespace-nowrap ${
+                    isLatest ? 'opacity-100 font-bold' : 'opacity-0 group-hover:opacity-100'
+                  }`}>
+                    {score}
+                  </div>
+                )}
+                <div
+                  className={`w-full rounded-t-sm transition-all ${
+                    isLatest
+                      ? 'bg-primary'
+                      : score !== null
+                        ? i === dayScores.length - 2
+                          ? 'bg-primary/40'
+                          : 'bg-slate-200 dark:bg-slate-800'
+                        : 'bg-slate-100 dark:bg-slate-800/50'
+                  }`}
+                  style={{ height: `${Math.max(pct, score !== null ? 8 : 4)}%` }}
+                />
+              </div>
+            );
+          })}
+        </div>
+        <div className="flex justify-between mt-2 text-xs text-slate-500 dark:text-slate-400 px-1">
+          {dayLabels.map((d, i) => (
+            <span key={i}>{d}</span>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
