@@ -379,12 +379,17 @@ export function Analysis() {
     setPage('report');
   };
 
+  const dismissGuide = () => {
+    setShowGuide(null);
+    // Phase is already 'ready' if MediaPipe loaded, or 'loading' if not.
+    // The "Start Measurement" button will appear when phase === 'ready'.
+  };
+
   const startReadiness = () => {
     readinessPassRef.current = 0;
     setReadinessPassCount(0);
     setReadinessResults([]);
     setAllPassed(false);
-    setShowGuide(null);
     store.setPhase('readiness');
   };
 
@@ -406,7 +411,7 @@ export function Analysis() {
     return (
       <GuideScreen
         view={showGuide}
-        onReady={showGuide === 'front' ? startReadiness : handleSideGuideReady}
+        onReady={showGuide === 'front' ? dismissGuide : handleSideGuideReady}
         onCancel={handleCancel}
         lang={lang}
       />
@@ -577,6 +582,11 @@ export function Analysis() {
 
           {/* Action buttons */}
           <div className="mt-4">
+            {phase === 'loading' && (
+              <div className="text-center py-2">
+                <p className="text-slate-400 text-sm">{loadStatus}</p>
+              </div>
+            )}
             {phase === 'ready' && (
               <button onClick={startReadiness} className="w-full py-3.5 rounded-xl bg-primary text-white font-semibold text-lg transition-transform active:scale-[0.98]">
                 {tr.analysis.startMeasure}
