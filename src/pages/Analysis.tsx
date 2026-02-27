@@ -34,12 +34,12 @@ function GuideScreen({ view, onReady, onCancel, lang }: {
   const tip = isFront ? guide.frontTip : guide.sideTip;
 
   return (
-    <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-900">
+    <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-900">
       <div className="flex items-center justify-between p-4">
-        <button onClick={onCancel} className="text-gray-500 dark:text-gray-400 text-sm px-3 py-1">
+        <button onClick={onCancel} className="text-slate-500 dark:text-slate-400 text-sm px-3 py-1">
           {tr.analysis.cancel}
         </button>
-        <span className="text-sm text-gray-500 dark:text-gray-400">
+        <span className="text-sm text-slate-500 dark:text-slate-400">
           {tr.analysis.step} {isFront ? '1' : '2'} {tr.analysis.of} {isFront ? '1' : '2'}
         </span>
       </div>
@@ -52,20 +52,20 @@ function GuideScreen({ view, onReady, onCancel, lang }: {
               {/* Stick figure - front view */}
               <svg viewBox="0 0 120 200" className="w-32 h-44">
                 {/* Head */}
-                <circle cx="60" cy="25" r="15" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary-500" />
+                <circle cx="60" cy="25" r="15" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary" />
                 {/* Body */}
-                <line x1="60" y1="40" x2="60" y2="110" stroke="currentColor" strokeWidth="2" className="text-primary-500" />
+                <line x1="60" y1="40" x2="60" y2="110" stroke="currentColor" strokeWidth="2" className="text-primary" />
                 {/* Arms */}
-                <line x1="60" y1="55" x2="30" y2="90" stroke="currentColor" strokeWidth="2" className="text-primary-500" />
-                <line x1="60" y1="55" x2="90" y2="90" stroke="currentColor" strokeWidth="2" className="text-primary-500" />
+                <line x1="60" y1="55" x2="30" y2="90" stroke="currentColor" strokeWidth="2" className="text-primary" />
+                <line x1="60" y1="55" x2="90" y2="90" stroke="currentColor" strokeWidth="2" className="text-primary" />
                 {/* Legs */}
-                <line x1="60" y1="110" x2="40" y2="170" stroke="currentColor" strokeWidth="2" className="text-primary-500" />
-                <line x1="60" y1="110" x2="80" y2="170" stroke="currentColor" strokeWidth="2" className="text-primary-500" />
+                <line x1="60" y1="110" x2="40" y2="170" stroke="currentColor" strokeWidth="2" className="text-primary" />
+                <line x1="60" y1="110" x2="80" y2="170" stroke="currentColor" strokeWidth="2" className="text-primary" />
                 {/* Camera indicator */}
-                <rect x="45" y="185" width="30" height="8" rx="2" fill="currentColor" className="text-gray-400" />
-                <text x="60" y="198" textAnchor="middle" fontSize="7" fill="currentColor" className="text-gray-400">{guide.distanceHint}</text>
+                <rect x="45" y="185" width="30" height="8" rx="2" fill="currentColor" className="text-slate-400" />
+                <text x="60" y="198" textAnchor="middle" fontSize="7" fill="currentColor" className="text-slate-400">{guide.distanceHint}</text>
                 {/* Arrow showing distance */}
-                <line x1="60" y1="175" x2="60" y2="183" stroke="currentColor" strokeWidth="1" strokeDasharray="2" className="text-gray-400" />
+                <line x1="60" y1="175" x2="60" y2="183" stroke="currentColor" strokeWidth="1" strokeDasharray="2" className="text-slate-400" />
               </svg>
             </div>
           ) : (
@@ -73,34 +73,34 @@ function GuideScreen({ view, onReady, onCancel, lang }: {
               {/* Stick figure - side view */}
               <svg viewBox="0 0 120 200" className="w-32 h-44">
                 {/* Head */}
-                <circle cx="55" cy="25" r="15" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary-500" />
+                <circle cx="55" cy="25" r="15" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary" />
                 {/* Body - slight natural curve */}
-                <path d="M55 40 Q58 75 55 110" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary-500" />
+                <path d="M55 40 Q58 75 55 110" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary" />
                 {/* Arms */}
-                <line x1="55" y1="55" x2="45" y2="90" stroke="currentColor" strokeWidth="2" className="text-primary-500" />
+                <line x1="55" y1="55" x2="45" y2="90" stroke="currentColor" strokeWidth="2" className="text-primary" />
                 {/* Legs */}
-                <line x1="55" y1="110" x2="50" y2="170" stroke="currentColor" strokeWidth="2" className="text-primary-500" />
+                <line x1="55" y1="110" x2="50" y2="170" stroke="currentColor" strokeWidth="2" className="text-primary" />
                 {/* 90° rotation arrow */}
                 <path d="M85 100 A20 20 0 0 1 85 130" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-amber-500" />
                 <polygon points="85,130 82,124 88,124" fill="currentColor" className="text-amber-500" />
                 <text x="95" y="118" fontSize="8" fill="currentColor" className="text-amber-500">90°</text>
                 {/* Camera */}
-                <rect x="45" y="185" width="30" height="8" rx="2" fill="currentColor" className="text-gray-400" />
+                <rect x="45" y="185" width="30" height="8" rx="2" fill="currentColor" className="text-slate-400" />
               </svg>
             </div>
           )}
         </div>
 
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">{title}</h2>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-6">{title}</h2>
 
         {/* Steps */}
         <div className="w-full max-w-sm space-y-3 mb-6">
           {steps.map((step: string, i: number) => (
             <div key={i} className="flex items-start gap-3">
-              <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary-500 text-white flex items-center justify-center text-sm font-bold">
+              <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold">
                 {i + 1}
               </div>
-              <p className="text-sm text-gray-700 dark:text-gray-300 pt-0.5">{step}</p>
+              <p className="text-sm text-slate-700 dark:text-slate-300 pt-0.5">{step}</p>
             </div>
           ))}
         </div>
@@ -114,7 +114,7 @@ function GuideScreen({ view, onReady, onCancel, lang }: {
       <div className="p-4 safe-area-bottom">
         <button
           onClick={onReady}
-          className="w-full py-3.5 rounded-xl bg-primary-500 text-white font-semibold text-lg"
+          className="w-full py-3.5 rounded-xl bg-primary text-white font-semibold text-lg"
         >
           {guide.ready}
         </button>

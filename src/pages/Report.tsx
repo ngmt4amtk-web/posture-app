@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useAppStore } from '../stores/appStore';
 import { useHistoryStore } from '../stores/historyStore';
 import { t } from '../i18n';
@@ -69,6 +69,56 @@ export function Report() {
     ? overallScore - prevSession.overallScore
     : null;
 
+  const [showCopied, setShowCopied] = useState(false);
+
+  const buildShareText = useCallback(() => {
+    const date = new Date(session.timestamp).toLocaleDateString(lang === 'ja' ? 'ja-JP' : 'en-US');
+    const statusLabel = (s: 'good' | 'warning' | 'bad') =>
+      s === 'good' ? (lang === 'ja' ? '良好' : 'Good')
+      : s === 'warning' ? (lang === 'ja' ? '注意' : 'Warning')
+      : (lang === 'ja' ? '要改善' : 'Needs Work');
+
+    const lines: string[] = [
+      lang === 'ja' ? `📊 PostureAI 姿勢分析レポート` : `📊 PostureAI Posture Report`,
+      `${date}`,
+      '',
+      `${typeTr.emoji} ${typeTr.name}`,
+      `${typeTr.tagline}`,
+      '',
+      lang === 'ja' ? `🏆 総合スコア: ${overallScore}/100 (${tierTr.label})` : `🏆 Overall: ${overallScore}/100 (${tierTr.label})`,
+      lang === 'ja' ? `📐 安定性: ${stability.grade}` : `📐 Stability: ${stability.grade}`,
+      '',
+      lang === 'ja' ? '--- 各指標 ---' : '--- Metrics ---',
+    ];
+
+    for (const key of METRIC_ORDER) {
+      const m = metrics[key];
+      if (!m) continue;
+      const metricTr = tr.metrics[key as keyof typeof tr.metrics];
+      if (!metricTr || !('name' in metricTr)) continue;
+      const icon = m.status === 'good' ? '✅' : m.status === 'warning' ? '⚠️' : '❌';
+      lines.push(`${icon} ${metricTr.name}: ${m.value}${m.unit} (${statusLabel(m.status)})`);
+    }
+
+    lines.push('', `🔗 https://ngmt4amtk-web.github.io/posture-app/`);
+    return lines.join('\n');
+  }, [session, metrics, overallScore, lang, tr, typeTr, tierTr, stability]);
+
+  const handleShare = async () => {
+    const text = buildShareText();
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: tr.report.shareTitle, text });
+        return;
+      } catch { /* user cancelled or error — fall through to clipboard */ }
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      setShowCopied(true);
+      setTimeout(() => setShowCopied(false), 2000);
+    } catch { /* clipboard failed */ }
+  };
+
   const visibleMetrics = showAllMetrics ? METRIC_ORDER : METRIC_ORDER.slice(0, 3);
 
   return (
@@ -82,7 +132,19 @@ export function Report() {
           <Icon name="arrow_back" />
         </button>
         <h2 className="flex-1 text-center text-lg font-bold">{tr.report.title}</h2>
-        <div className="w-10" /> {/* spacer */}
+        <div className="relative">
+          <button
+            onClick={handleShare}
+            className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          >
+            <Icon name="share" />
+          </button>
+          {showCopied && (
+            <div className="absolute -bottom-8 right-0 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-medium px-2 py-1 rounded-md whitespace-nowrap">
+              {tr.report.copied}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto pb-24 space-y-6 p-4">
